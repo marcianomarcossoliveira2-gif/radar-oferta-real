@@ -1,37 +1,93 @@
 // Radar de Oferta Real — consulta segura de item/preço/avaliações no Mercado Livre
-// Este arquivo é código-fonte para Edge Function. Tokens ficam somente no servidor.
+// Tokens e refresh token ficam somente no servidor.
 
 import "jsr:@supabase/functions-js/edge-runtime.d.ts";
 import { createClient } from "jsr:@supabase/supabase-js@2";
 
 const API = "https://api.mercadolibre.com";
+const CLIENT_ID = "3411921791590842";
+const FRONTEND_ORIGIN = "https://marcianomarcossoliveira2-gif.github.io";
+
+const cors = {
+  "Access-Control-Allow-Origin": FRONTEND_ORIGIN,
+  "Access-Control-Allow-Headers": "content-type",
+  "Access-Control-Allow-Methods": "GET,OPTIONS",
+  "Vary": "Origin",
+};
+
+function json(data: unknown, status = 200) {
+  return new Response(JSON.stringify(data), {
+    status,
+    headers: { ...cors, "Content-Type": "application/json", "Cache-Control": "no-store" },
+  });
+}
 
 Deno.serve(async (req: Request) => {
-  if (req.method !== "GET") return Response.json({ error: "method_not_allowed" }, { status: 405 });
+  if (req.method === "OPTIONS") return new Response("ok", { headers: cors });
+  if (req.method !== "GET") return json({ error: "method_not_allowed" }, 405);
+
+  const origin = req.headers.get("origin");
+  if (origin && origin !== FRONTEND_ORIGIN) return json({ error: "origin_not_allowed" }, 403);
 
   const u = new URL(req.url);
   const itemId = (u.searchParams.get("item_id") || "").trim().toUpperCase();
-  if (!/^MLB\d{6,15}$/.test(itemId)) return Response.json({ error: "invalid_item_id" }, { status: 400 });
+  if (!/^MLB\d{6,15}$/.test(itemId)) return json({ error: "invalid_item_id" }, 400);
 
   const supabaseUrl = Deno.env.get("SUPABASE_URL");
   const serviceRole = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
-  if (!supabaseUrl || !serviceRole) return Response.json({ error: "server_not_configured" }, { status: 503 });
+  const clientSecret = Deno.env.get("MELI_CLIENT_SECRET");
+  if (!supabaseUrl || !serviceRole || !clientSecret) return json({ error: "server_not_configured" }, 503);
 
   const db = createClient(supabaseUrl, serviceRole, { auth: { persistSession: false } });
-  const { data: tokenRow } = await db
+  const { data: tokenRow, error: tokenReadError } = await db
     .from("radar_meli_tokens")
-    .select("access_token,expires_at")
+    .select("user_id,access_token,refresh_token,token_type,scope,expires_at,updated_at")
     .order("updated_at", { ascending: false })
     .limit(1)
     .maybeSingle();
 
-  if (!tokenRow?.access_token) return Response.json({ error: "meli_not_connected" }, { status: 503 });
-  if (tokenRow.expires_at && new Date(tokenRow.expires_at).getTime() <= Date.now()) {
-    return Response.json({ error: "meli_token_expired", reconnect_required: true }, { status: 401 });
+  if (tokenReadError || !tokenRow?.access_token) return json({ error: "meli_not_connected" }, 503);
+
+  let accessToken = tokenRow.access_token as string;
+  const expiresMs = tokenRow.expires_at ? new Date(tokenRow.expires_at).getTime() : 0;
+  const shouldRefresh = !expiresMs || expiresMs <= Date.now() + 5 * 60 * 1000;
+
+  if (shouldRefresh) {
+    if (!tokenRow.refresh_token) return json({ error: "meli_refresh_token_missing", reconnect_required: true }, 401);
+
+    const form = new URLSearchParams({
+      grant_type: "refresh_token",
+      client_id: CLIENT_ID,
+      client_secret: clientSecret,
+      refresh_token: tokenRow.refresh_token,
+    });
+
+    const refreshRes = await fetch(`${API}/oauth/token`, {
+      method: "POST",
+      headers: { "accept": "application/json", "content-type": "application/x-www-form-urlencoded" },
+      body: form,
+    });
+    const refreshed = await refreshRes.json().catch(() => null);
+    if (!refreshRes.ok || !refreshed?.access_token) {
+      return json({ error: "meli_refresh_failed", reconnect_required: true, status: refreshRes.status }, 401);
+    }
+
+    accessToken = refreshed.access_token;
+    const expiresAt = new Date(Date.now() + Number(refreshed.expires_in || 21600) * 1000).toISOString();
+    const { error: saveRefreshError } = await db.from("radar_meli_tokens").upsert({
+      user_id: Number(refreshed.user_id || tokenRow.user_id),
+      access_token: refreshed.access_token,
+      refresh_token: refreshed.refresh_token || tokenRow.refresh_token,
+      token_type: refreshed.token_type || tokenRow.token_type || "Bearer",
+      scope: refreshed.scope || tokenRow.scope || null,
+      expires_at: expiresAt,
+      updated_at: new Date().toISOString(),
+    }, { onConflict: "user_id" });
+    if (saveRefreshError) return json({ error: "meli_refresh_storage_failed" }, 500);
   }
 
   const headers = {
-    Authorization: `Bearer ${tokenRow.access_token}`,
+    Authorization: `Bearer ${accessToken}`,
     "show-all-prices": "true",
   };
 
@@ -47,7 +103,7 @@ Deno.serve(async (req: Request) => {
 
   const bulk = Array.isArray(itemPayload) ? itemPayload[0] : null;
   const item = bulk?.body || null;
-  if (!item) return Response.json({ error: "item_lookup_failed", status: itemRes.status }, { status: 502 });
+  if (!item) return json({ error: "item_lookup_failed", status: itemRes.status, source_status: { item: itemRes.status, prices: priceRes.status, reviews: reviewRes.status } }, 502);
 
   const prices = Array.isArray(pricePayload?.prices) ? pricePayload.prices : [];
   const eligible = prices.filter((p: any) => {
@@ -63,7 +119,8 @@ Deno.serve(async (req: Request) => {
   const ratingAverage = Number(reviewPayload?.rating_average ?? 0) || null;
   const reviewCount = Number(reviewPayload?.paging?.total ?? 0) || 0;
 
-  return Response.json({
+  return json({
+    ok: true,
     item: {
       id: itemId,
       title: item.title ?? null,
