@@ -4,108 +4,100 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="theme-color" content="#111827">
-<title>Radar de Oferta Real V1</title>
+<title>Radar de Oferta Real</title>
 <style>
 :root{font-family:system-ui,-apple-system,Segoe UI,Roboto,sans-serif;color:#111827;background:#f3f4f6}
-*{box-sizing:border-box} body{margin:0} header{background:#111827;color:white;padding:22px 18px}
-header h1{margin:0;font-size:22px} header p{margin:6px 0 0;color:#d1d5db;font-size:13px}
-main{max-width:900px;margin:auto;padding:16px}.panel,.card{background:white;border-radius:16px;padding:16px;margin-bottom:14px;box-shadow:0 2px 10px #0000000d}
-.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px}
-label{font-size:12px;font-weight:700;color:#4b5563} input,select{width:100%;padding:11px;border:1px solid #d1d5db;border-radius:10px;margin-top:5px;font-size:15px}
-button{border:0;border-radius:11px;padding:12px 15px;font-weight:800;cursor:pointer}
-.primary{background:#111827;color:white;width:100%;margin-top:12px}.secondary{background:#e5e7eb;color:#111827}
-.badge{display:inline-block;padding:5px 9px;border-radius:999px;background:#f3f4f6;font-size:12px;font-weight:800;margin-right:5px}
-.score{font-size:28px;font-weight:900}.price{font-size:26px;font-weight:900;margin:8px 0}
-.muted{color:#6b7280;font-size:13px}.row{display:flex;justify-content:space-between;gap:12px;align-items:center}
-.good{border-left:6px solid #111827}.hidden{display:none}.why{margin-top:10px;padding:10px;background:#f9fafb;border-radius:10px;font-size:13px}
-footer{text-align:center;color:#6b7280;font-size:12px;padding:16px}
+*{box-sizing:border-box}body{margin:0}header{background:#111827;color:white;padding:22px 18px}header h1{margin:0;font-size:22px}header p{margin:6px 0 0;color:#d1d5db;font-size:13px}
+main{max-width:920px;margin:auto;padding:16px}.panel,.card{background:white;border-radius:16px;padding:16px;margin-bottom:14px;box-shadow:0 2px 10px #0000000d}.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:10px}
+label{font-size:12px;font-weight:700;color:#4b5563}input,select{width:100%;padding:11px;border:1px solid #d1d5db;border-radius:10px;margin-top:5px;font-size:15px}button{border:0;border-radius:11px;padding:12px 15px;font-weight:800;cursor:pointer}.primary{background:#111827;color:white;width:100%;margin-top:12px}.secondary{background:#e5e7eb;color:#111827}.danger{background:#fee2e2;color:#991b1b}.badge{display:inline-block;padding:5px 9px;border-radius:999px;background:#f3f4f6;font-size:12px;font-weight:800;margin:2px 5px 2px 0}.score{font-size:28px;font-weight:900}.price{font-size:26px;font-weight:900;margin:8px 0}.muted{color:#6b7280;font-size:13px}.row{display:flex;justify-content:space-between;gap:12px;align-items:center}.good{border-left:6px solid #16a34a}.forming{border-left:6px solid #f59e0b}.bad{border-left:6px solid #dc2626}.hidden{display:none}.why{margin-top:10px;padding:10px;background:#f9fafb;border-radius:10px;font-size:13px}.status{font-weight:800;margin-top:10px}.thumb{width:88px;height:88px;object-fit:contain;border-radius:12px;background:#f9fafb}.cardtop{display:flex;gap:14px;align-items:flex-start}.grow{flex:1}.actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}footer{text-align:center;color:#6b7280;font-size:12px;padding:16px}a{color:#2563eb}
 </style>
 </head>
 <body>
-<header><h1>🔥 Radar de Oferta Real — V1</h1><p>Ferramentas + Tecnologia • qualidade acima de quantidade</p></header>
+<header><h1>🔥 Radar de Oferta Real</h1><p>Mercado Livre • Ferramentas + Tecnologia • dados reais da API</p></header>
 <main>
 <section class="panel">
 <div class="grid">
-<div><label>Categoria<select id="cat"><option>Ferramentas</option><option>Tecnologia</option><option>Todas</option></select></label></div>
 <div><label>Avaliação mínima<input id="minRating" type="number" value="4.5" min="0" max="5" step=".1"></label></div>
 <div><label>Mín. de avaliações<input id="minReviews" type="number" value="30" min="0"></label></div>
 <div><label>Nota mínima da oferta<input id="minScore" type="number" value="85" min="0" max="100"></label></div>
 <div><label>Máximo por dia<input id="maxDay" type="number" value="50" min="1" max="50"></label></div>
 </div>
-<button class="primary" onclick="buscar()">🔎 BUSCAR OFERTAS AGORA</button>
-<p class="muted">V1 roda localmente no navegador. O preço riscado não entra no cálculo. O histórico salvo neste aparelho começa a ser formado a partir dos preços registrados.</p>
+<button id="btnSearch" class="primary" onclick="buscarTodos()">🔎 BUSCAR OFERTAS AGORA</button>
+<p id="globalStatus" class="muted">O preço riscado do anúncio não entra no cálculo. O histórico de 90 dias é formado apenas com preços realmente observados pelo Radar.</p>
 </section>
 
 <section class="panel">
-<h3 style="margin-top:0">Adicionar produto para acompanhar</h3>
+<h3 style="margin-top:0">Acompanhar produto do Mercado Livre</h3>
 <div class="grid">
-<div><label>Produto<input id="name" placeholder="Ex.: Caixa Tramontina 43800005"></label></div>
-<div><label>Preço atual (R$)<input id="price" type="number" step=".01" placeholder="128,52"></label></div>
-<div><label>Preço com cupom/Pix (R$)<input id="finalPrice" type="number" step=".01" placeholder="93,00"></label></div>
-<div><label>Preço-alvo (R$)<input id="target" type="number" step=".01" placeholder="100,00"></label></div>
-<div><label>Estrelas<input id="rating" type="number" step=".1" min="0" max="5" value="4.8"></label></div>
-<div><label>Nº avaliações<input id="reviews" type="number" value="100"></label></div>
-<div><label>Categoria<select id="newCat"><option>Ferramentas</option><option>Tecnologia</option></select></label></div>
+<div style="grid-column:1/-1"><label>ID do anúncio<input id="itemId" placeholder="Ex.: MLB1234567890"></label></div>
 </div>
-<button class="secondary" style="margin-top:12px" onclick="adicionar()">+ Registrar produto/preço</button>
+<button class="secondary" style="margin-top:12px" onclick="adicionarItem()">+ Adicionar e consultar agora</button>
+<p class="muted">Use o código que começa com <b>MLB</b>. Depois de adicionado, o Radar consulta preço e avaliação pela API e passa a formar o histórico real.</p>
 </section>
 
-<div class="row"><h2>Ofertas aprovadas</h2><span id="count" class="badge">0</span></div>
+<div class="row"><h2>Produtos acompanhados</h2><span id="count" class="badge">0</span></div>
 <section id="results"></section>
 </main>
-<footer>Radar de Oferta Real V1 • dados ficam salvos somente neste navegador</footer>
+<footer>Radar de Oferta Real • credenciais ficam somente no servidor Supabase</footer>
 
 <script>
-const KEY='radar_oferta_real_v1';
-function load(){
- let d=JSON.parse(localStorage.getItem(KEY)||'null');
- if(!d){
-  d={products:[{
-   id:'tramontina-43800005',name:'Caixa de Ferramentas Tramontina 43800005 — 5 gavetas (~50 cm)',
-   category:'Ferramentas',price:128.52,finalPrice:93,target:100,rating:4.8,reviews:100,
-   history:[{date:new Date().toISOString(),price:128.52,finalPrice:93}]
-  }]};
-  localStorage.setItem(KEY,JSON.stringify(d));
- }
- return d;
-}
+const API='https://llgaeuvtrcpcvrcxkvpz.supabase.co/functions/v1/radar-meli-api';
+const KEY='radar_oferta_real_live_v1';
+function load(){try{return JSON.parse(localStorage.getItem(KEY)||'{"items":[],"data":{}}')}catch{return {items:[],data:{}}}}
 function save(d){localStorage.setItem(KEY,JSON.stringify(d))}
-function median(a){if(!a.length)return null; a=[...a].sort((x,y)=>x-y);let m=Math.floor(a.length/2);return a.length%2?a[m]:(a[m-1]+a[m])/2}
-function score(p){
- let hist=p.history.flatMap(h=>[h.finalPrice||h.price]).filter(Boolean);
- let med=median(hist);
- let effective=p.finalPrice||p.price;
- let s=50, reasons=[];
- if(p.rating>=4.5){s+=10;reasons.push('avaliação ≥ 4,5')} else s-=30;
- if(p.reviews>=30){s+=5;reasons.push('volume mínimo de avaliações atendido')} else s-=10;
- if(p.target && effective<=p.target){s+=30;reasons.push('preço final atingiu o preço-alvo')} 
- if(med && effective<med){let drop=(med-effective)/med; s+=Math.min(20,drop*80); reasons.push('abaixo da mediana registrada')}
- if(p.finalPrice && p.finalPrice<p.price){s+=5;reasons.push('cupom/Pix reduz o preço efetivo')}
- return {value:Math.max(0,Math.min(100,Math.round(s))),reasons,med,effective};
+function money(v){return v==null?'—':Number(v).toLocaleString('pt-BR',{style:'currency',currency:'BRL'})}
+function esc(s){return String(s??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]))}
+function normalizeId(v){const m=String(v||'').toUpperCase().match(/MLB\d{6,15}/);return m?m[0]:''}
+function score(x){
+ const rating=Number(x?.rating?.average||0),reviews=Number(x?.rating?.count||0),price=Number(x?.price?.amount||0),med=Number(x?.history90d?.median||0),min90=Number(x?.history90d?.min||0),obs=Number(x?.history90d?.observations||0);
+ let s=45,reasons=[];
+ if(rating>=4.5){s+=15;reasons.push('avaliação ≥ 4,5')}else{s-=35;reasons.push('avaliação abaixo de 4,5')}
+ if(reviews>=30){s+=10;reasons.push('30+ avaliações')}else{s-=15;reasons.push('poucas avaliações')}
+ if(med>0&&price>0&&price<med){const drop=(med-price)/med;s+=Math.min(25,drop*100);reasons.push(`${Math.round(drop*100)}% abaixo da mediana observada`)}
+ if(min90>0&&price>0&&price<=min90){s+=5;reasons.push('no menor preço observado do período')}
+ if(obs<14){s=Math.min(s,84);reasons.push(`histórico ainda em formação (${obs}/14 observações mínimas)`)}
+ return {value:Math.max(0,Math.min(100,Math.round(s))),reasons};
 }
-function money(v){return v==null?'—':v.toLocaleString('pt-BR',{style:'currency',currency:'BRL'})}
-function buscar(){
- const d=load(), cat=document.getElementById('cat').value, minR=+minRating.value, minRev=+minReviews.value, minS=+minScore.value, max=+maxDay.value;
- let arr=d.products.map(p=>({...p,_s:score(p)})).filter(p=>(cat==='Todas'||p.category===cat)&&p.rating>=minR&&p.reviews>=minRev&&p._s.value>=minS).sort((a,b)=>b._s.value-a._s.value).slice(0,max);
- results.innerHTML=arr.map((p,i)=>`<article class="card good">
- <div class="row"><div><span class="badge">${p.category}</span><span class="badge">⭐ ${p.rating} (${p.reviews})</span></div><div class="score">${p._s.value}/100</div></div>
- <h3>${p.name}</h3><div class="price">${money(p._s.effective)}</div>
- <div class="muted">Preço observado: ${money(p.price)} • preço-alvo: ${money(p.target)} • mediana registrada: ${money(p._s.med)}</div>
- <button class="secondary" style="margin-top:10px" onclick="document.getElementById('w${i}').classList.toggle('hidden')">Por que é oferta?</button>
- <div id="w${i}" class="why hidden">${p._s.reasons.join(' • ') || 'Ainda sem sinais suficientes.'}<br><br><b>Importante:</b> preço riscado do anúncio é ignorado.</div>
- </article>`).join('');
- count.textContent=arr.length;
- if(!arr.length) results.innerHTML='<div class="panel"><b>Nenhuma oferta passou pelo filtro.</b><p class="muted">Isso é esperado: o radar não precisa preencher 50 vagas.</p></div>';
+async function fetchItem(id){
+ const r=await fetch(`${API}?item_id=${encodeURIComponent(id)}`,{cache:'no-store'});
+ const j=await r.json().catch(()=>({error:'resposta_invalida'}));
+ if(!r.ok)throw new Error(j.error||`HTTP ${r.status}`);
+ return j;
 }
-function adicionar(){
- let d=load(), n=name.value.trim(), pr=+price.value, fp=+finalPrice.value||null, t=+target.value||null, r=+rating.value, rv=+reviews.value;
- if(!n||!pr){alert('Informe pelo menos o nome e o preço atual.');return}
- let p=d.products.find(x=>x.name.toLowerCase()===n.toLowerCase());
- if(!p){p={id:Date.now().toString(),name:n,category:newCat.value,price:pr,finalPrice:fp,target:t,rating:r,reviews:rv,history:[]};d.products.push(p)}
- p.price=pr;p.finalPrice=fp;p.target=t;p.rating=r;p.reviews=rv;p.category=newCat.value;
- p.history.push({date:new Date().toISOString(),price:pr,finalPrice:fp});
- save(d);alert('Preço registrado no histórico.');buscar();
+async function adicionarItem(){
+ const id=normalizeId(itemId.value);
+ if(!id){alert('Informe um ID válido começando com MLB.');return}
+ let d=load();if(!d.items.includes(id))d.items.unshift(id);save(d);itemId.value='';
+ await atualizarUm(id);render();
 }
-buscar();
+async function atualizarUm(id){
+ let d=load();d.data[id]={...(d.data[id]||{}),loading:true,error:null};save(d);render();
+ try{const x=await fetchItem(id);d=load();d.data[id]={...x,loading:false,error:null,lastChecked:new Date().toISOString()};save(d)}
+ catch(e){d=load();d.data[id]={...(d.data[id]||{}),loading:false,error:String(e.message||e),lastChecked:new Date().toISOString()};save(d)}
+}
+async function buscarTodos(){
+ const d=load();
+ if(!d.items.length){globalStatus.textContent='Adicione pelo menos um produto para começar.';return}
+ btnSearch.disabled=true;btnSearch.textContent='Consultando Mercado Livre…';globalStatus.textContent=`Atualizando ${d.items.length} produto(s)…`;
+ for(const id of d.items)await atualizarUm(id);
+ btnSearch.disabled=false;btnSearch.textContent='🔎 BUSCAR OFERTAS AGORA';globalStatus.textContent='Consulta concluída. Os preços observados agora já entraram no histórico real.';render();
+}
+function remover(id){let d=load();d.items=d.items.filter(x=>x!==id);delete d.data[id];save(d);render()}
+function render(){
+ const d=load(),minR=+minRating.value,minRev=+minReviews.value,minS=+minScore.value,max=+maxDay.value;
+ count.textContent=d.items.length;
+ if(!d.items.length){results.innerHTML='<div class="panel"><b>Nenhum produto acompanhado ainda.</b><p class="muted">Adicione um ID MLB acima para fazer a primeira consulta real.</p></div>';return}
+ const rows=d.items.map(id=>({id,x:d.data[id]})).sort((a,b)=>score(b.x||{}).value-score(a.x||{}).value).slice(0,max);
+ results.innerHTML=rows.map(({id,x})=>{
+  if(!x)return `<article class="card forming"><h3>${id}</h3><p class="muted">Ainda não consultado.</p><div class="actions"><button class="secondary" onclick="atualizarUm('${id}')">Consultar</button><button class="danger" onclick="remover('${id}')">Remover</button></div></article>`;
+  if(x.loading)return `<article class="card forming"><h3>${id}</h3><p class="status">Consultando Mercado Livre…</p></article>`;
+  if(x.error)return `<article class="card bad"><h3>${id}</h3><p class="status">Falha: ${esc(x.error)}</p><div class="actions"><button class="secondary" onclick="atualizarUm('${id}')">Tentar novamente</button><button class="danger" onclick="remover('${id}')">Remover</button></div></article>`;
+  const s=score(x),passes=Number(x.rating?.average||0)>=minR&&Number(x.rating?.count||0)>=minRev&&s.value>=minS,forming=!x.history90d?.enough_for_claim,cls=passes?'good':forming?'forming':'bad';
+  const link=x.item?.permalink?`<a href="${esc(x.item.permalink)}" target="_blank" rel="noopener">Abrir anúncio</a>`:'';
+  return `<article class="card ${cls}"><div class="cardtop">${x.item?.thumbnail?`<img class="thumb" src="${esc(x.item.thumbnail)}" alt="">`:''}<div class="grow"><div class="row"><div><span class="badge">${esc(id)}</span><span class="badge">⭐ ${x.rating?.average??'—'} (${x.rating?.count??0})</span></div><div class="score">${s.value}/100</div></div><h3>${esc(x.item?.title||id)}</h3><div class="price">${money(x.price?.amount)}</div><div class="muted">Mediana 90d observada: ${money(x.history90d?.median)} • menor observado: ${money(x.history90d?.min)} • observações: ${x.history90d?.observations??0}</div><div class="actions">${link}<button class="secondary" onclick="atualizarUm('${id}')">Atualizar</button><button class="danger" onclick="remover('${id}')">Remover</button></div></div></div><div class="why"><b>${passes?'Oferta aprovada pelos filtros atuais':forming?'Histórico em formação':'Ainda não passou pelos filtros'}</b><br>${esc(s.reasons.join(' • '))}<br><br><b>Preço riscado:</b> ignorado.</div></article>`;
+ }).join('');
+}
+[minRating,minReviews,minScore,maxDay].forEach(el=>el.addEventListener('change',render));
+render();
 </script>
 </body></html>
