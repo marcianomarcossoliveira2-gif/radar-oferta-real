@@ -1,41 +1,80 @@
 (() => {
+  function norm(text) {
+    return String(text || '')
+      .normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+      .replace(/\s+/g, ' ')
+      .trim().toUpperCase();
+  }
+
   function parseMoney(text) {
-    const m = String(text || '').match(/R\$\s*([0-9.]+(?:,[0-9]{2})?)/i);
-    if (!m) return null;
-    const n = Number(m[1].replace(/\./g, '').replace(',', '.'));
-    return Number.isFinite(n) && n > 0 ? n : null;
+    const matches = [...String(text || '').matchAll(/R\$\s*([0-9.]+(?:,[0-9]{2})?)/gi)];
+    if (!matches.length) return null;
+    const values = matches.map(m => Number(m[1].replace(/\./g, '').replace(',', '.')))
+      .filter(n => Number.isFinite(n) && n > 0);
+    return values.length ? values[values.length - 1] : null;
   }
 
   function extractIds() {
     const s = (location.href + ' ' + document.documentElement.innerHTML).toUpperCase();
     const up = s.match(/MLBU\d{6,16}/)?.[0] || '';
-    const item = s.match(/MLB\d{6,15}/)?.[0] || '';
+    const item = s.match(/MLB\d{6,16}/)?.[0] || '';
     return { productId: up || item, itemId: item };
   }
 
+  function priceNearLabel(labelMatcher) {
+    const els = [...document.querySelectorAll('body *')];
+    for (const el of els) {
+      const own = norm(el.innerText || el.textContent || '');
+      if (!own || own.length > 80 || !labelMatcher(own)) continue;
+
+      const scopes = [el, el.parentElement, el.parentElement?.parentElement, el.parentElement?.parentElement?.parentElement].filter(Boolean);
+      for (const scope of scopes) {
+        const txt = scope.innerText || scope.textContent || '';
+        const n = norm(txt);
+        if (!n || n.length > 500) continue;
+        const p = parseMoney(txt);
+        if (p) return { price: p, evidence: txt.trim().replace(/\s*\n\s*/g, ' | ') };
+      }
+    }
+    return null;
+  }
+
   function findPrice() {
-    const bodyText = document.body?.innerText || '';
-    const lines = bodyText.split(/\n+/).map(x => x.trim()).filter(Boolean);
-    const anchors = ['VOCÊ PAGARÁ', 'VOCE PAGARA', 'TOTAL'];
+    // 1) Prioridade absoluta: "Você pagará". Nunca confundir com subtotal.
+    let found = priceNearLabel(t => t === 'VOCE PAGARA' || t.startsWith('VOCE PAGARA '));
+    if (found) return found;
+
+    // 2) Busca por linhas: pega o preço associado somente ao rótulo "Você pagará".
+    const lines = (document.body?.innerText || '').split(/\n+/).map(x => x.trim()).filter(Boolean);
     for (let i = 0; i < lines.length; i++) {
-      const u = lines[i].toUpperCase();
-      if (anchors.some(a => u.includes(a))) {
-        for (let j = i; j <= Math.min(lines.length - 1, i + 4); j++) {
+      const n = norm(lines[i]);
+      if (n === 'VOCE PAGARA' || n.startsWith('VOCE PAGARA ')) {
+        const same = parseMoney(lines[i]);
+        if (same) return { price: same, evidence: lines[i] };
+        for (let j = i + 1; j <= Math.min(lines.length - 1, i + 2); j++) {
           const p = parseMoney(lines[j]);
-          if (p) return { price: p, evidence: lines.slice(i, Math.min(lines.length, i + 5)).join(' | ') };
+          if (p) return { price: p, evidence: lines.slice(i, j + 1).join(' | ') };
         }
       }
     }
-    const candidates = [];
-    document.querySelectorAll('body *').forEach(el => {
-      const t = (el.textContent || '').trim();
-      if (!t || t.length > 160) return;
-      if (/VOCÊ PAGARÁ|VOCE PAGARA|TOTAL/i.test(t)) {
-        const p = parseMoney(t);
-        if (p) candidates.push({ price: p, evidence: t });
+
+    // 3) Fallback: rótulo TOTAL exato. "SUBTOTAL" não entra aqui.
+    found = priceNearLabel(t => t === 'TOTAL' || t.startsWith('TOTAL '));
+    if (found) return found;
+
+    for (let i = 0; i < lines.length; i++) {
+      const n = norm(lines[i]);
+      if (n === 'TOTAL' || n.startsWith('TOTAL ')) {
+        const same = parseMoney(lines[i]);
+        if (same) return { price: same, evidence: lines[i] };
+        for (let j = i + 1; j <= Math.min(lines.length - 1, i + 2); j++) {
+          const p = parseMoney(lines[j]);
+          if (p) return { price: p, evidence: lines.slice(i, j + 1).join(' | ') };
+        }
       }
-    });
-    return candidates[0] || null;
+    }
+
+    return null;
   }
 
   chrome.runtime.onMessage.addListener((msg, _sender, sendResponse) => {
