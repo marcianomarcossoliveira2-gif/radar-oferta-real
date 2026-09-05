@@ -118,6 +118,42 @@ Deno.serve(async (req: Request) => {
 
   const ratingAverage = Number(reviewPayload?.rating_average ?? 0) || null;
   const reviewCount = Number(reviewPayload?.paging?.total ?? 0) || 0;
+  const now = new Date().toISOString();
+
+  const { error: productSaveError } = await db.from("radar_products").upsert({
+    item_id: itemId,
+    title: item.title ?? null,
+    category_id: item.category_id ?? null,
+    permalink: item.permalink ?? null,
+    thumbnail: item.thumbnail ?? null,
+    rating_average: ratingAverage,
+    review_count: reviewCount,
+    active: item.status === "active",
+    updated_at: now,
+  }, { onConflict: "item_id" });
+
+  if (!productSaveError && chosen) {
+    await db.from("radar_price_history").insert({
+      item_id: itemId,
+      observed_price: Number(chosen.amount),
+      currency_id: chosen.currency_id || "BRL",
+      price_type: chosen.type || null,
+      observed_at: now,
+      source: "mercadolivre_api",
+    });
+  }
+
+  const { data: hist } = await db
+    .from("radar_price_history")
+    .select("observed_price,observed_at")
+    .eq("item_id", itemId)
+    .gte("observed_at", new Date(Date.now() - 90 * 24 * 60 * 60 * 1000).toISOString())
+    .order("observed_at", { ascending: true })
+    .limit(1000);
+
+  const values = (hist || []).map((h: any) => Number(h.observed_price)).filter((v: number) => Number.isFinite(v) && v > 0).sort((a: number,b: number)=>a-b);
+  const median = values.length ? (values.length % 2 ? values[(values.length-1)/2] : (values[values.length/2-1] + values[values.length/2]) / 2) : null;
+  const min90 = values.length ? values[0] : null;
 
   return json({
     ok: true,
@@ -139,6 +175,13 @@ Deno.serve(async (req: Request) => {
       currency_id: chosen.currency_id || "BRL",
       type: chosen.type || null,
     } : null,
+    history90d: {
+      observations: values.length,
+      median,
+      min: min90,
+      enough_for_claim: values.length >= 14,
+    },
+    stored: !productSaveError,
     source_status: {
       item: itemRes.status,
       prices: priceRes.status,
