@@ -1,8 +1,8 @@
 {
   "manifest_version": 3,
   "name": "Radar de Oferta Real - Capturador",
-  "version": "0.1.0",
-  "description": "Captura o preço final exibido no checkout do Mercado Livre e envia para o Radar.",
+  "version": "0.3.0",
+  "description": "Captura o preço final real exibido no checkout do Mercado Livre e envia para o Radar.",
   "permissions": ["activeTab", "storage", "tabs"],
   "host_permissions": ["https://www.mercadolivre.com.br/*"],
   "action": {
