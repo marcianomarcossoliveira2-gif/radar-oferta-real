@@ -1,0 +1,9 @@
+const CAPTURE_API='https://llgaeuvtrcpcvrcxkvpz.supabase.co/functions/v1/radar-meli-capture-api';
+const ALARM='radar-auto-monitor';
+async function getCfg(){return await chrome.storage.local.get({autoEnabled:false,intervalMinutes:30,lastAuto:null,lastError:null,lastCount:0})}
+async function setAlarm(){const c=await getCfg();await chrome.alarms.clear(ALARM);if(c.autoEnabled){await chrome.alarms.create(ALARM,{periodInMinutes:Math.max(5,Number(c.intervalMinutes)||30)})}}
+async function postCapture(r){const resp=await fetch(CAPTURE_API,{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({product_id:r.productId,item_id:r.itemId,price:r.price,source:'checkout_extension_auto'})});const j=await resp.json().catch(()=>({}));if(!resp.ok)throw new Error(j.error||`HTTP ${resp.status}`);return j}
+async function scan(){const tabs=await chrome.tabs.query({url:'https://www.mercadolivre.com.br/*'});let count=0,errors=[];for(const tab of tabs){if(!tab.id)continue;try{const r=await chrome.tabs.sendMessage(tab.id,{type:'RADAR_CAPTURE'});if(r?.ok&&r?.price&&r?.productId){await postCapture(r);count++}}catch(e){errors.push(String(e?.message||e))}}
+ await chrome.storage.local.set({lastAuto:new Date().toISOString(),lastCount:count,lastError:errors[0]||null});return {count,errors}}
+chrome.runtime.onInstalled.addListener(setAlarm);chrome.runtime.onStartup.addListener(setAlarm);chrome.alarms.onAlarm.addListener(a=>{if(a.name===ALARM)scan()});
+chrome.runtime.onMessage.addListener((m,_s,send)=>{if(m?.type==='RADAR_AUTO_CONFIG'){chrome.storage.local.set({autoEnabled:!!m.enabled,intervalMinutes:Math.max(5,Number(m.intervalMinutes)||30)}).then(setAlarm).then(()=>send({ok:true}));return true}if(m?.type==='RADAR_AUTO_STATUS'){getCfg().then(send);return true}if(m?.type==='RADAR_AUTO_RUN'){scan().then(r=>send({ok:true,...r})).catch(e=>send({ok:false,error:String(e?.message||e)}));return true}});
