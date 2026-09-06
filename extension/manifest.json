@@ -1,8 +1,8 @@
 {
   "manifest_version": 3,
   "name": "Radar de Oferta Real - Capturador",
-  "version": "0.5.0",
-  "description": "Captura preço final e executa uma fila protegida de verificação, sem finalizar compras.",
+  "version": "0.5.1",
+  "description": "Captura preço final e executa uma fila protegida usando o link real do produto, sem finalizar compras.",
   "permissions": ["activeTab", "storage", "tabs", "alarms", "scripting"],
   "host_permissions": [
     "https://www.mercadolivre.com.br/*",
