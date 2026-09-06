@@ -1,25 +1,19 @@
 {
   "manifest_version": 3,
   "name": "Radar de Oferta Real - Capturador",
-  "version": "0.4.0",
-  "description": "Captura o preço final real no checkout e pode monitorar automaticamente abas abertas do Mercado Livre.",
-  "permissions": ["activeTab", "storage", "tabs", "alarms"],
+  "version": "0.5.0",
+  "description": "Captura preço final e executa uma fila protegida de verificação, sem finalizar compras.",
+  "permissions": ["activeTab", "storage", "tabs", "alarms", "scripting"],
   "host_permissions": [
     "https://www.mercadolivre.com.br/*",
+    "https://marcianomarcossoliveira2-gif.github.io/radar-oferta-real/*",
     "https://llgaeuvtrcpcvrcxkvpz.supabase.co/*"
   ],
-  "background": {
-    "service_worker": "background.js"
-  },
-  "action": {
-    "default_title": "Radar de Oferta Real",
-    "default_popup": "popup.html"
-  },
-  "content_scripts": [
-    {
-      "matches": ["https://www.mercadolivre.com.br/*"],
-      "js": ["content.js"],
-      "run_at": "document_idle"
-    }
-  ]
+  "background": {"service_worker": "background.js"},
+  "action": {"default_title": "Radar de Oferta Real", "default_popup": "popup.html"},
+  "content_scripts": [{
+    "matches": ["https://www.mercadolivre.com.br/*"],
+    "js": ["content.js"],
+    "run_at": "document_idle"
+  }]
 }
