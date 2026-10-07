@@ -1,14 +1,14 @@
 {
   "id": "./",
-  "name": "Radar de Oferta Real",
-  "short_name": "Radar",
+  "name": "Mundo das Ferramentas - Ofertas",
+  "short_name": "Ferramentas",
   "lang": "pt-BR",
   "start_url": "./",
   "scope": "./",
   "display": "standalone",
   "background_color": "#f3f4f6",
-  "theme_color": "#111827",
-  "description": "Área do Cliente do Radar de Oferta Real",
+  "theme_color": "#061827",
+  "description": "Ofertas reais do Mundo das Ferramentas",
   "icons": [
     {
       "src": "icons/icon-192.png",
