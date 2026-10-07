@@ -1,4 +1,3 @@
-
 const base = Deno.env.get("SUPABASE_URL")!;
 const secret = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
 const allowed = new Set([
@@ -55,27 +54,33 @@ Deno.serve(async (req: Request) => {
     const page = safeInt(u.searchParams.get("page"),0,0,100);
     const pageSize = 24;
 
-    const alerts = await query("radar_real_offer_alerts",{
-      select:"id,item_id,offer_item_id,title,observed_price,history_median_90d,history_min_90d,discount_vs_history_median_pct,observed_at,rating_average,sold_quantity,affiliate_url,affiliate_verified,affiliate_price_verified,affiliate_landing_price,coupon_code,coupon_discount,coupon_final_price,coupon_eligibility,official_store_id",
-      observed_price:"gt.0",
-      history_median_90d:"gt.0",
-      observed_at:"gte."+new Date(Date.now()-30*86400000).toISOString(),
-      order:"observed_at.desc",
-      limit:"500",
-      ...(q ? {title:"ilike.*"+q+"*"} : {})
-    });
-
-    const latest = new Map<string,any>();
-    for (const a of alerts) if (validId(a.item_id) && !latest.has(a.item_id)) latest.set(a.item_id,a);
-    const ids = [...latest.keys()];
-    if (!ids.length) return out(req,{rows:[],total:0,updated_at:new Date().toISOString()});
-
-    const products = await query("radar_products",{
-      select:"item_id,title,category_id,permalink,thumbnail,rating_average,review_count,active,updated_at",
-      item_id:"in.("+ids.join(",")+")",
-      limit:String(Math.min(ids.length,500))
-    });
+    // Select eligible products before limiting alerts; unrelated recent rows
+    // must not hide products whose buyer reviews have been verified.
+    const products = (await query("radar_products",{
+      select:"item_id,title,category_id,permalink,thumbnail,rating_average,review_count,active,updated_at,rating_source,rating_verified_at",
+      review_count:"gte.30",
+      rating_average:"gte.4.5",
+      active:"eq.true",
+      order:"rating_verified_at.desc.nullslast",
+      limit:"1000"
+    })).filter((p:any)=>validId(p.item_id) && p.rating_verified_at && !/test|mock|synthetic/i.test(p.rating_source||""));
+    if (!products.length) return out(req,{rows:[],total:0,updated_at:new Date().toISOString()});
     const pm = new Map(products.map((p:any)=>[p.item_id,p]));
+    const latest = new Map<string,any>();
+    for (let offset=0; offset<products.length; offset+=50) {
+      const ids=products.slice(offset,offset+50).map((p:any)=>p.item_id);
+      const alerts = await query("radar_real_offer_alerts",{
+        select:"id,item_id,offer_item_id,title,observed_price,history_median_90d,history_min_90d,discount_vs_history_median_pct,observed_at,rating_average,sold_quantity,affiliate_url,affiliate_verified,affiliate_price_verified,affiliate_landing_price,coupon_code,coupon_discount,coupon_final_price,coupon_eligibility,official_store_id",
+        item_id:"in.("+ids.join(",")+")",
+        observed_price:"gt.0",
+        history_median_90d:"gt.0",
+        observed_at:"gte."+new Date(Date.now()-24*60*60*1000).toISOString(),
+        order:"observed_at.desc",
+        limit:"1000",
+        ...(q ? {title:"ilike.*"+q+"*"} : {})
+      });
+      for (const a of alerts) if (validId(a.item_id) && !latest.has(a.item_id)) latest.set(a.item_id,a);
+    }
 
     let rows = [...latest.values()].map((a:any)=>{
       const p:any = pm.get(a.item_id)||{};
@@ -99,7 +104,7 @@ Deno.serve(async (req: Request) => {
         affiliate_url:a.affiliate_verified ? (a.affiliate_url||null) : null,
         affiliate_price_verified:!!a.affiliate_price_verified,
         affiliate_landing_price:num(a.affiliate_landing_price),
-        permalink:p.permalink||null,
+        permalink:validId(a.offer_item_id) ? "https://produto.mercadolivre.com.br/MLB-"+a.offer_item_id.slice(3)+"-_" : null,
         thumbnail:p.thumbnail||null,
         observed_at:a.observed_at
       };
@@ -153,4 +158,3 @@ Deno.serve(async (req: Request) => {
     return out(req,{error:"radar_unavailable"},503);
   }
 });
-

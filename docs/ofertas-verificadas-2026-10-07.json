@@ -1,0 +1,56 @@
+{
+  "verified_at": "2026-10-07T12:38:32.619Z",
+  "source": "Mercado Livre — página pública aberta no navegador",
+  "offers": [
+    {
+      "item_id": "MLB30144703",
+      "offer_item_id": "MLB7759444028",
+      "rating": 4.8,
+      "reviews": 55863,
+      "price": 101.35,
+      "source_url": "https://produto.mercadolivre.com.br/MLB-7759444028-_"
+    },
+    {
+      "item_id": "MLB47944518",
+      "offer_item_id": "MLB4940949477",
+      "rating": 4.8,
+      "reviews": 10490,
+      "price": 265.8,
+      "source_url": "https://produto.mercadolivre.com.br/MLB-4940949477-_"
+    },
+    {
+      "item_id": "MLB50181290",
+      "offer_item_id": "MLB5333696097",
+      "rating": 4.7,
+      "reviews": 35675,
+      "price": 99.9,
+      "note": "94,90 no Pix; 99,90 em outros meios.",
+      "source_url": "https://produto.mercadolivre.com.br/MLB-5333696097-_"
+    },
+    {
+      "item_id": "MLB19802405",
+      "offer_item_id": "MLB5289249391",
+      "rating": 4.9,
+      "reviews": 27376,
+      "price": 199.54,
+      "note": "189,56 no Pix; 199,54 parcelado sem juros.",
+      "source_url": "https://produto.mercadolivre.com.br/MLB-5289249391-_"
+    },
+    {
+      "item_id": "MLB25371983",
+      "offer_item_id": "MLB5166439747",
+      "rating": 4.8,
+      "reviews": 79422,
+      "price": 299,
+      "source_url": "https://produto.mercadolivre.com.br/MLB-5166439747-_"
+    },
+    {
+      "item_id": "MLB39962085",
+      "offer_item_id": "MLB7665034718",
+      "rating": 4.8,
+      "reviews": 217701,
+      "price": 61,
+      "source_url": "https://produto.mercadolivre.com.br/MLB-7665034718-_"
+    }
+  ]
+}
