@@ -1,7 +1,7 @@
 const LOCAL_IMAGES={"https://http2.mlstatic.com/D_NQ_NP_981459-MLA117136184907_092026-F.jpg":"images/MLB30144703-a21c1ed1c4.webp","https://http2.mlstatic.com/D_NQ_NP_707426-MLU72340464209_102023-F.jpg":"images/MLB19802405-a4f1802ab5.webp","https://http2.mlstatic.com/D_NQ_NP_835659-MLA116548375638_092026-F.jpg":"images/MLB50181290-fe4475bb76.webp","https://http2.mlstatic.com/D_NQ_NP_715678-MLU78765136521_082024-F.jpg":"images/MLB39962085-7563b69464.webp","https://http2.mlstatic.com/D_NQ_NP_681126-MLA115545993062_082026-F.jpg":"images/MLB25371983-9956128aa0.webp","https://http2.mlstatic.com/D_NQ_NP_894333-MLA115546000124_082026-F.jpg":"images/MLB47944518-2aa277f269.webp"};
 const API="https://llgaeuvtrcpcvrcxkvpz.supabase.co/functions/v1/radar-client-offers";
 const $=s=>document.querySelector(s);
-const cards=$("#cards"),q=$("#q"),category=$("#category"),discount=$("#discount"),maxPrice=$("#maxPrice"),coupon=$("#coupon"),official=$("#official"),count=$("#count"),statusEl=$("#status");
+const cards=$("#cards"),q=$("#q"),category=$("#category"),days=$("#days"),discount=$("#discount"),maxPrice=$("#maxPrice"),coupon=$("#coupon"),official=$("#official"),count=$("#count"),statusEl=$("#status");
 let offers=[],timer=null,requestId=0,loadState="loading",activeController;
 const money=v=>v==null||!Number.isFinite(Number(v))?"—":Number(v).toLocaleString("pt-BR",{style:"currency",currency:"BRL"});
 const esc=s=>String(s??"").replace(/[&<>"\']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","\'":"&#39;"}[c]));
@@ -42,6 +42,7 @@ async function load(){
   loadState="loading";offers=[];render();statusEl.className="status";statusEl.textContent="● Atualizando";
   const p=new URLSearchParams();
   if(q.value.trim())p.set("q",q.value.trim());
+  p.set("days",days.value||"1");
   p.set("min_discount",discount.value||"0");
   if(maxPrice.value)p.set("max_price",maxPrice.value);
   if(coupon.checked)p.set("coupon","true");
@@ -65,7 +66,7 @@ async function load(){
 }
 $("#filtersBtn").onclick=()=>{const hidden=$("#filters").classList.toggle("hidden");$("#filtersBtn").setAttribute("aria-expanded",String(!hidden))};
 q.addEventListener("input",()=>{clearTimeout(timer);timer=setTimeout(load,350)});
-[discount,maxPrice,coupon,official].forEach(el=>el.addEventListener("change",load));
+[days,discount,maxPrice,coupon,official].forEach(el=>el.addEventListener("change",load));
 category.addEventListener("change",render);
 $("#refreshBtn").onclick=load;
 document.querySelectorAll("[data-view]").forEach(button=>button.onclick=()=>{
@@ -73,7 +74,7 @@ document.querySelectorAll("[data-view]").forEach(button=>button.onclick=()=>{
   for(const name of ["offers","favorites","alerts"])$("#"+name+"Panel").classList.toggle("hidden",name!==view);
   document.querySelectorAll("[data-view]").forEach(b=>{b.classList.toggle("active",b===button);if(b===button)b.setAttribute("aria-current","page");else b.removeAttribute("aria-current")});
   if(view==="favorites"){
-    q.value="";category.value="";discount.value="0";maxPrice.value="";coupon.checked=false;official.checked=false;load();
+    q.value="";category.value="";days.value="1";discount.value="0";maxPrice.value="";coupon.checked=false;official.checked=false;load();
   }else render();
 });
 document.addEventListener("click",event=>{
