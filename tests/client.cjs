@@ -1,0 +1,48 @@
+const assert = require('node:assert/strict');
+const fs = require('node:fs');
+const path = require('node:path');
+const http = require('node:http');
+const { chromium } = require('C:/Users/marci/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/node_modules/playwright');
+const root=path.resolve(__dirname,'../cliente');
+const fixture={item_id:'MLB12345678',offer_item_id:'MLB87654321',title:'Parafusadeira Bosch teste',price:199.9,rating:4.8,review_count:80,discount_pct:20,history_min_90d:180,history_median_90d:250,history_max_90d:280,affiliate_url:'https://example.com/oferta',category_id:'TOOLS'};
+const server=http.createServer((req,res)=>{const file=path.join(root,decodeURIComponent(new URL(req.url,'http://localhost').pathname==='/'?'/index.html':new URL(req.url,'http://localhost').pathname));if(!file.startsWith(root+path.sep)){res.writeHead(403).end();return}try{const ext=path.extname(file);res.setHeader('Content-Type',({'.html':'text/html','.js':'application/javascript','.css':'text/css','.png':'image/png','.svg':'image/svg+xml','.webmanifest':'application/manifest+json'})[ext]||'text/plain');res.end(fs.readFileSync(file))}catch{res.writeHead(404).end()}});
+(async()=>{
+ await new Promise(r=>server.listen(0,'127.0.0.1',r));
+ const browser=await chromium.launch({headless:true,channel:'msedge'});
+ try{
+  const context=await browser.newContext({viewport:{width:390,height:844},serviceWorkers:'allow'});
+  let mode='ok';const errors=[];
+  await context.route('https://llgaeuvtrcpcvrcxkvpz.supabase.co/functions/v1/**',async route=>{
+   if(route.request().url().includes('radar-client-push'))return route.fulfill({status:503,body:'{}'});
+   if(mode==='offline')return route.abort('internetdisconnected');
+   if(mode==='error')return route.fulfill({status:503,body:'{}'});
+   return route.fulfill({contentType:'application/json',body:JSON.stringify({rows:mode==='empty'?[]:[fixture],total:mode==='empty'?0:1})});
+  });
+  const page=await context.newPage();page.on('pageerror',e=>errors.push(e.message));
+  await page.goto('http://127.0.0.1:'+server.address().port);
+  await page.getByText('1 oferta validada',{exact:true}).waitFor();
+  await page.getByRole('button',{name:'♡ Salvar favorito',exact:true}).click();
+  await page.getByRole('button',{name:'Favoritos',exact:true}).click();
+  await page.locator('#favoriteCards .price').waitFor();
+  await page.reload();await page.getByText('1 oferta validada',{exact:true}).waitFor();
+  await page.getByRole('button',{name:'Favoritos',exact:true}).click();
+  await page.getByRole('button',{name:'Remover dos favoritos',exact:true}).waitFor();
+  assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth),true,'mobile overflow');
+  await page.getByRole('button',{name:'Ofertas',exact:true}).click();await page.getByRole('button',{name:'Filtros',exact:true}).click();
+  await page.getByLabel('Categoria',{exact:true}).selectOption('Tecnologia');await page.getByText('0 ofertas validadas',{exact:true}).waitFor();
+  await page.getByLabel('Categoria',{exact:true}).selectOption('Ferramentas');await page.getByText('1 oferta validada',{exact:true}).waitFor();
+  mode='empty';await page.getByRole('button',{name:'Atualizar ofertas',exact:true}).click();await page.getByText('0 ofertas validadas',{exact:true}).waitFor();
+  mode='error';await page.getByRole('button',{name:'Atualizar ofertas',exact:true}).click();await page.getByText('Ofertas indisponíveis',{exact:true}).waitFor();
+  mode='ok';await page.getByRole('button',{name:'Atualizar ofertas',exact:true}).click();await page.getByText('1 oferta validada',{exact:true}).waitFor();
+  await page.evaluate(()=>navigator.serviceWorker.ready);
+  await page.reload();await page.getByText('1 oferta validada',{exact:true}).waitFor();
+  mode='offline';await context.setOffline(true);await page.reload();await page.getByText('Ofertas indisponíveis',{exact:true}).waitFor();
+  await page.getByRole('button',{name:'Favoritos',exact:true}).click();await page.getByRole('button',{name:'Remover dos favoritos',exact:true}).waitFor();
+  assert.equal(await page.locator('#favoriteCards .price').count(),0,'offline prices must be hidden');
+  await page.getByRole('button',{name:'Remover dos favoritos',exact:true}).click();await page.getByText(/Você ainda não salvou favoritos/).waitFor();
+  assert.deepEqual(errors,[]);
+  await context.setOffline(false);mode='ok';await page.getByRole('button',{name:'Ofertas',exact:true}).click();await page.getByRole('button',{name:'Atualizar ofertas',exact:true}).click();await page.getByText('1 oferta validada',{exact:true}).waitFor();
+  fs.mkdirSync(path.resolve(__dirname,'../../verification'),{recursive:true});await page.screenshot({path:path.resolve(__dirname,'../../verification/mobile.png'),fullPage:true});
+  console.log('PASS: cards, filters, favorites persistence/removal, empty/error/recovery, mobile layout, offline shell without stale prices.');
+ }finally{await browser.close();server.close()}
+})().catch(e=>{console.error(e);server.close();process.exitCode=1});
