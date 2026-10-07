@@ -1,3 +1,4 @@
+
 const base = Deno.env.get("SUPABASE_URL")!;
 const secret = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
 const allowed = new Set([
@@ -70,7 +71,7 @@ Deno.serve(async (req: Request) => {
     for (let offset=0; offset<products.length; offset+=50) {
       const ids=products.slice(offset,offset+50).map((p:any)=>p.item_id);
       const alerts = await query("radar_real_offer_alerts",{
-        select:"id,item_id,offer_item_id,title,observed_price,history_median_90d,history_min_90d,discount_vs_history_median_pct,observed_at,rating_average,sold_quantity,affiliate_url,affiliate_verified,affiliate_price_verified,affiliate_landing_price,coupon_code,coupon_discount,coupon_final_price,coupon_eligibility,official_store_id",
+        select:"id,item_id,offer_item_id,title,observed_price,history_median_90d,history_min_90d,discount_vs_history_median_pct,observed_at,rating_average,sold_quantity,affiliate_url,affiliate_offer_item_id,affiliate_verified,affiliate_price_verified,affiliate_landing_price,coupon_code,coupon_discount,coupon_final_price,coupon_eligibility,official_store_id",
         item_id:"in.("+ids.join(",")+")",
         observed_price:"gt.0",
         history_median_90d:"gt.0",
@@ -101,7 +102,7 @@ Deno.serve(async (req: Request) => {
         coupon_final_price:num(a.coupon_final_price),
         coupon_eligibility:a.coupon_eligibility||null,
         official_store:!!a.official_store_id,
-        affiliate_url:a.affiliate_verified ? (a.affiliate_url||null) : null,
+        affiliate_url:a.affiliate_verified && a.affiliate_price_verified && a.affiliate_offer_item_id===a.offer_item_id && Math.abs(Number(a.affiliate_landing_price)-Number(a.observed_price))<=0.01 ? (a.affiliate_url||null) : null,
         affiliate_price_verified:!!a.affiliate_price_verified,
         affiliate_landing_price:num(a.affiliate_landing_price),
         permalink:validId(a.offer_item_id) ? "https://produto.mercadolivre.com.br/MLB-"+a.offer_item_id.slice(3)+"-_" : null,

@@ -1,0 +1,6 @@
+const fs=require('node:fs'),path=require('node:path'),crypto=require('node:crypto');
+const sharp=require('C:/Users/marci/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/node_modules/sharp');
+const workspace=path.resolve(__dirname,'../..'),root=path.resolve(__dirname,'../cliente');
+(async()=>{const offers=JSON.parse(fs.readFileSync(path.join(workspace,'ofertas-publicadas.json'))).rows;const mapping={};fs.mkdirSync(path.join(root,'images'),{recursive:true});let before=0,after=0;
+for(const o of offers){const input=path.join(workspace,'verification/originals',o.item_id+'.jpg');const hash=crypto.createHash('sha256').update(o.thumbnail).digest('hex').slice(0,10);const relative='images/'+o.item_id+'-'+hash+'.webp';await sharp(input).rotate().resize({width:600,height:600,fit:'inside',withoutEnlargement:true}).webp({quality:78}).toFile(path.join(root,relative));mapping[o.thumbnail]=relative;before+=fs.statSync(input).size;after+=fs.statSync(path.join(root,relative)).size;}
+fs.writeFileSync(path.join(root,'images/sources.json'),JSON.stringify(mapping,null,2));console.log(JSON.stringify({count:offers.length,before,after,savedPercent:Math.round(100*(1-after/before))}));})().catch(e=>{console.error(e);process.exitCode=1});

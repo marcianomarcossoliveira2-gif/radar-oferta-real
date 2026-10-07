@@ -4,7 +4,7 @@ const path = require('node:path');
 const http = require('node:http');
 const { chromium } = require('C:/Users/marci/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/node_modules/playwright');
 const root=path.resolve(__dirname,'../cliente');
-const fixture={item_id:'MLB12345678',offer_item_id:'MLB87654321',title:'Parafusadeira Bosch teste',price:199.9,rating:4.8,review_count:80,discount_pct:20,history_min_90d:180,history_median_90d:250,history_max_90d:280,affiliate_url:'https://example.com/oferta',category_id:'TOOLS'};
+const fixture={item_id:'MLB12345678',offer_item_id:'MLB87654321',title:'Parafusadeira Bosch teste',price:199.9,rating:4.8,review_count:80,discount_pct:20,history_min_90d:180,history_median_90d:250,history_max_90d:280,affiliate_url:'https://example.com/oferta',category_id:'TOOLS',thumbnail:'https://http2.mlstatic.com/D_NQ_NP_981459-MLA117136184907_092026-F.jpg',permalink:'https://example.com/direto'};
 const server=http.createServer((req,res)=>{const file=path.join(root,decodeURIComponent(new URL(req.url,'http://localhost').pathname==='/'?'/index.html':new URL(req.url,'http://localhost').pathname));if(!file.startsWith(root+path.sep)){res.writeHead(403).end();return}try{const ext=path.extname(file);res.setHeader('Content-Type',({'.html':'text/html','.js':'application/javascript','.css':'text/css','.png':'image/png','.svg':'image/svg+xml','.webmanifest':'application/manifest+json'})[ext]||'text/plain');res.end(fs.readFileSync(file))}catch{res.writeHead(404).end()}});
 (async()=>{
  await new Promise(r=>server.listen(0,'127.0.0.1',r));
@@ -21,6 +21,10 @@ const server=http.createServer((req,res)=>{const file=path.join(root,decodeURICo
   const page=await context.newPage();page.on('pageerror',e=>errors.push(e.message));
   await page.goto('http://127.0.0.1:'+server.address().port);
   await page.getByText('1 oferta validada',{exact:true}).waitFor();
+  await page.locator('#cards img').evaluate(img=>img.decode());
+  assert.equal(await page.locator('#cards img').evaluate(img=>img.naturalWidth>0&&new URL(img.currentSrc).origin===location.origin),true,'optimized same-origin photo');
+  fixture.affiliate_url=null;await page.getByRole('button',{name:'Atualizar ofertas',exact:true}).click();await page.getByText('Link afiliado em validação',{exact:true}).waitFor();assert.equal(await page.locator('#cards a.cta').count(),0,'never use direct link as affiliate fallback');
+  fixture.affiliate_url='https://example.com/oferta';await page.getByRole('button',{name:'Atualizar ofertas',exact:true}).click();await page.locator('#cards a.cta').waitFor();
   await page.getByRole('button',{name:'♡ Salvar favorito',exact:true}).click();
   await page.getByRole('button',{name:'Favoritos',exact:true}).click();
   await page.locator('#favoriteCards .price').waitFor();
