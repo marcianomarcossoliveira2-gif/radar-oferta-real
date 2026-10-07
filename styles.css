@@ -11,3 +11,31 @@ button,input,select{font:inherit}button{cursor:pointer;min-height:44px}button:di
 .share span{font-size:19px;line-height:1}
 .share:active{transform:translateY(1px)}
 @media(max-width:360px){.offer-actions{grid-template-columns:1fr}.share,.offer-actions .cta{width:100%}}
+/* Identidade Mundo das Ferramentas — Área do Cliente */
+:root{background:#f2f3f5;color:#0b1420}
+body{background:#f2f3f5}
+.top{background:#061827;color:#fff;align-items:center;padding:calc(14px + env(safe-area-inset-top)) 16px 18px;border-bottom:4px solid #ffca05;box-shadow:0 4px 16px #06182722}
+.top .eyebrow{color:#ffca05;font-size:12px;letter-spacing:.06em}
+.top h1{font-size:22px;font-weight:950;line-height:1.05;color:#fff;margin:4px 0}
+.top p{color:#dce4ed}
+.status{background:#152d40;color:#f8fafc}
+main{max-width:1120px;margin:auto}
+.searchbox{background:#061827;padding:12px;border-radius:16px;box-shadow:0 4px 12px #06182720}
+.searchbox input{border:0;border-radius:30px;padding:15px 18px}
+.searchbox button{border:0;border-radius:30px;background:#ffca05;color:#091521}
+.toolbar button,#pushEnable{background:#ffca05;color:#071827;border-color:#e5b300}
+.toolbar{justify-content:flex-end}
+.summary strong{color:#061827}
+.cards{gap:12px}
+.card{border-radius:17px;border:1px solid #e8e9ed;box-shadow:0 4px 14px #0718270d}
+.photo-wrap{background:#fff}
+.title{color:#0b1420}
+.price{color:#071827}
+.offer-actions .cta,.cta{background:#071827;color:white}
+.share{background:#ffca05;color:#071827}
+.bottom{background:#061827;border-top:2px solid #ffca05;box-shadow:0 -3px 18px #0002}
+.bottom button{color:#dce5ed}
+.bottom .active{color:#ffca05}
+.favorite[aria-pressed=true]{background:#fff3b8;color:#071827;border-color:#ffca05}
+@media(min-width:760px){.cards{grid-template-columns:repeat(2,minmax(0,1fr))}.photo-wrap{height:280px}}
+@media(max-width:440px){.top{flex-wrap:nowrap}.top h1{font-size:18px}.status{font-size:10px}.photo-wrap{height:210px}.body{padding:12px}.price{font-size:24px}}
