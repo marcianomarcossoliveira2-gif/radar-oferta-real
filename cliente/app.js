@@ -111,7 +111,7 @@ sortOrder.addEventListener("change",render);
 $("#refreshBtn").onclick=load;
 $("#shareAppBtn").onclick=async()=>{
   const url="https://ofertas.marcianomarcoss.com.br/";
-  const message="🔥 Quer encontrar boas ofertas sem perder tempo?\n\n🔧 Conheça o *Mundo das Ferramentas*! Acompanhe ofertas reais de ferramentas, tecnologia e acessórios direto no celular.\n\n📲 *INSTALE GRÁTIS* • Rápido • Acesso com 1 toque\n\n👉 Abra e instale: "+url;
+  const message="🔥 Ofertas boas não esperam!\n\n🔧 Acompanhe promoções de ferramentas e tecnologia no *Mundo das Ferramentas*.\n\n📲 *Instale grátis:* "+url;
   if(navigator.share){try{await navigator.share({title:"Mundo das Ferramentas",text:message});trackMetric("app_share");return}catch(e){if(e?.name==="AbortError")return}}
   try{await navigator.clipboard.writeText(message);trackMetric("app_share");notice("Convite e link do aplicativo copiados! Compartilhe com seus amigos.")}
   catch{window.open("https://wa.me/?text="+encodeURIComponent(message),"_blank","noopener,noreferrer");trackMetric("app_share");notice("Se não abriu o WhatsApp, copie o endereço do aplicativo para compartilhar.")}
