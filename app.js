@@ -118,11 +118,11 @@ document.addEventListener("click",event=>{
   try{localStorage.setItem(FAVORITES_KEY,JSON.stringify(next));favorites=next;notice(existing?"Favorito removido.":"Favorito salvo neste navegador.");render()}
   catch{notice("Não foi possível salvar. Verifique o armazenamento permitido neste navegador.")}
 });
-window.addEventListener("beforeinstallprompt",event=>{event.preventDefault();installPrompt=event});
+window.addEventListener("beforeinstallprompt",event=>{event.preventDefault();installPrompt=event;$("#installBtn").textContent="⬇ Instalar Mundo das Ferramentas";$("#installHelp").classList.add("hidden")});
 $("#installBtn").onclick=async()=>{
-  if(!installPrompt){$("#installHelp").classList.toggle("hidden");return}
+  if(!installPrompt){$("#installHelp").classList.remove("hidden");$("#installHelp").scrollIntoView({behavior:"smooth",block:"nearest"});return}
   const prompt=installPrompt;installPrompt=null;
-  try{await prompt.prompt();await prompt.userChoice}catch{$("#installHelp").classList.remove("hidden")}
+  try{await prompt.prompt();const choice=await prompt.userChoice;if(choice?.outcome!=="accepted")$("#installHelp").classList.remove("hidden")}catch{$("#installHelp").classList.remove("hidden")}
 };
 function installed(){$("#installBtn").classList.add("hidden");$("#installHelp").classList.add("hidden")}
 if(window.matchMedia("(display-mode: standalone)").matches||navigator.standalone)installed();
