@@ -21,7 +21,8 @@ header{display:flex;align-items:center;justify-content:space-between;gap:15px;fl
 <label for="email">E-mail</label><input id="email" type="email" autocomplete="username" value="marcianomarcossoliveira2@gmail.com" required>
 <label for="password">Senha</label><input id="password" type="password" autocomplete="current-password" placeholder="Sua senha de acesso" required>
 <div class="actions"><button class="primary" id="enter">Entrar</button><button id="forgot" type="button">Esqueci minha senha</button></div>
-<p id="loginNotice" role="status" aria-live="polite" class="detail"></p></section>
+<p id="loginNotice" role="status" aria-live="polite" class="detail"></p>
+<div id="recovery" class="hidden"><label for="newPassword">Nova senha (mínimo 8 caracteres)</label><input type="password" id="newPassword" autocomplete="new-password" minlength="8"><div class="actions"><button id="changePassword" class="primary">Definir nova senha</button></div></div></section>
 <section id="settings" class="hidden">
 <div class="panel"><h2>Modos rápidos</h2><div class="presets">
 <button data-preset="volume">📦 Mais ofertas</button><button data-preset="balanced">⚖️ Equilibrado</button><button data-preset="strict">💎 Excepcionais</button></div>
@@ -100,6 +101,18 @@ $('save').addEventListener('click',async()=>{
  catch(e){notice(e.message,true)}
  finally{busy=false;$('save').disabled=false}
 });
+$('changePassword').addEventListener('click',async()=>{
+ const password=$('newPassword').value;
+ if(password.length<8){loginNotice('Use uma senha com pelo menos 8 caracteres.');return}
+ $('changePassword').disabled=true;
+ try{const {error}=await auth.auth.updateUser({password});if(error)throw error;$('recovery').classList.add('hidden');$('newPassword').value='';loginNotice('Senha alterada! Você já pode acessar os ajustes.');await showAdmin()}catch(e){loginNotice('Não foi possível definir a senha: '+e.message)}finally{$('changePassword').disabled=false}
+});
+auth.auth.onAuthStateChange(async(event)=>{
+ if(event==='PASSWORD_RECOVERY'){$('settings').classList.add('hidden');$('login').classList.remove('hidden');$('recovery').classList.remove('hidden');loginNotice('Escolha sua nova senha.')}
+});
+const urlParams=new URLSearchParams(location.hash.replace(/^#/,''));
+const recoveryLink=urlParams.get('type')==='recovery';
 const {data:{session}}=await auth.auth.getSession();
-if(session?.user?.email?.toLowerCase()===adminEmail){try{await showAdmin()}catch(e){loginNotice(e.message)}}
+if(!recoveryLink&&session?.user?.email?.toLowerCase()===adminEmail){try{await showAdmin()}catch(e){loginNotice(e.message)}}
+if(recoveryLink){$('recovery').classList.remove('hidden');loginNotice('Escolha sua nova senha abaixo.')}
 </script></body></html>
