@@ -39,3 +39,8 @@ main{max-width:1120px;margin:auto}
 .favorite[aria-pressed=true]{background:#fff3b8;color:#071827;border-color:#ffca05}
 @media(min-width:760px){.cards{grid-template-columns:repeat(2,minmax(0,1fr))}.photo-wrap{height:280px}}
 @media(max-width:440px){.top{flex-wrap:nowrap}.top h1{font-size:18px}.status{font-size:10px}.photo-wrap{height:210px}.body{padding:12px}.price{font-size:24px}}
+
+.brand-lockup{display:flex;align-items:center;gap:12px;min-width:0}.brand-logo{width:76px;height:76px;object-fit:contain;flex-shrink:0}.brand-lockup h1{font-size:20px}.brand-lockup .eyebrow{font-size:10px}@media(max-width:440px){.brand-logo{width:62px;height:62px}.brand-lockup{gap:8px}.brand-lockup h1{font-size:16px}.brand-lockup .eyebrow{font-size:9px}}
+
+/* Cabeçalho: um único nome e emblema sempre visível */
+.top .brand-lockup{display:flex;align-items:center;gap:12px;flex:1;min-width:0}.top .brand-logo{display:block;width:74px;height:74px;object-fit:contain;flex-shrink:0}.top .brand-lockup h1{margin:0 0 5px;font-size:20px;line-height:1.12}.top .brand-lockup p{margin:0}.top .status{flex-shrink:0}@media(max-width:440px){.top .brand-logo{width:60px;height:60px}.top .brand-lockup h1{font-size:16px}.top{gap:6px}}
