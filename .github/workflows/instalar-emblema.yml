@@ -1,0 +1,35 @@
+name: Instalar emblema Mundo das Ferramentas
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/instalar-emblema.yml'
+  workflow_dispatch:
+permissions:
+  contents: write
+jobs:
+  instalar:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: true
+      - name: Extrair emblema enviado e instalar nos dois caminhos
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p /tmp/emblema cliente/icons icons
+          unzip -o icons/logo_mundo_ferramentas_pwa.zip -d /tmp/emblema
+          for f in icon-192.png icon-512.png maskable-512.png apple-touch-icon.png; do
+            cp "/tmp/emblema/$f" "cliente/icons/$f"
+            cp "/tmp/emblema/$f" "icons/$f"
+          done
+          cp /tmp/emblema/logo-mundo-das-ferramentas.png cliente/icons/logo-mundo-das-ferramentas.png
+          cp /tmp/emblema/logo-mundo-das-ferramentas.png icons/logo-mundo-das-ferramentas.png
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add cliente/icons icons
+          if ! git diff --cached --quiet; then
+            git commit -m "Instala logo oficial e ícones do PWA"
+            git push
+          fi
