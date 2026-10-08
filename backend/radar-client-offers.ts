@@ -120,7 +120,8 @@ Deno.serve(async (req: Request) => {
       (!officialOnly || r.official_store)
     );
 
-    rows.sort((a:any,b:any)=> b.discount_pct-a.discount_pct || new Date(b.observed_at).getTime()-new Date(a.observed_at).getTime());
+    // Mais recentes primeiro; percentual de desconto desempata horarios iguais.
+    rows.sort((a:any,b:any)=> new Date(b.observed_at).getTime()-new Date(a.observed_at).getTime() || b.discount_pct-a.discount_pct);
     const total = rows.length;
     rows = rows.slice(page*pageSize,page*pageSize+pageSize);
 
