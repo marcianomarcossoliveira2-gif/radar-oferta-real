@@ -103,6 +103,13 @@ q.addEventListener("input",()=>{clearTimeout(timer);timer=setTimeout(load,350)})
 category.addEventListener("change",render);
 sortOrder.addEventListener("change",render);
 $("#refreshBtn").onclick=load;
+$("#shareAppBtn").onclick=async()=>{
+  const url="https://ofertas.marcianomarcoss.com.br/";
+  const message="🔧 Conheça o Mundo das Ferramentas! Veja ofertas reais de ferramentas, tecnologia e muito mais. Instale nosso aplicativo e acompanhe as novidades: "+url;
+  if(navigator.share){try{await navigator.share({title:"Mundo das Ferramentas",text:message});return}catch(e){if(e?.name==="AbortError")return}}
+  try{await navigator.clipboard.writeText(message);notice("Convite e link do aplicativo copiados! Compartilhe com seus amigos.")}
+  catch{window.open("https://wa.me/?text="+encodeURIComponent(message),"_blank","noopener,noreferrer");notice("Se não abriu o WhatsApp, copie o endereço do aplicativo para compartilhar.")}
+};
 document.querySelectorAll("[data-view]").forEach(button=>button.onclick=()=>{
   view=button.dataset.view;
   for(const name of ["offers","favorites","alerts"])$("#"+name+"Panel").classList.toggle("hidden",name!==view);
