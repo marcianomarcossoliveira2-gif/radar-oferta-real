@@ -2,6 +2,7 @@ import {createClient} from "https://esm.sh/@supabase/supabase-js@2.57.0";
 const client=createClient("https://llgaeuvtrcpcvrcxkvpz.supabase.co","sb_publishable_wjLehqy8cAwaJZo-TScrqA_aWY6FTjO",{auth:{persistSession:true,autoRefreshToken:true,detectSessionInUrl:true}});
 const $$=s=>document.querySelector(s),money=v=>Number(v).toLocaleString("pt-BR",{style:"currency",currency:"BRL"});
 let wanted="price",session=null;
+window.mundoAuth={getAccessToken:async()=> (await client.auth.getSession()).data.session?.access_token||null,requireLogin:()=>enter("alerts")};
 const panel=$$("#pricePanel"),authPanel=$$("#loginPanel"),msg=$$("#priceMessage");
 const say=t=>{msg.textContent=t;msg.hidden=!t};
 const escapeHtml=s=>String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
