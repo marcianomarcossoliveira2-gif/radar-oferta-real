@@ -69,3 +69,6 @@ main{max-width:1120px;margin:auto}
 .cta-wrap .secondary-btn:focus-visible{outline:3px solid #2563eb;outline-offset:3px}
 @media(max-width:500px){.toolbar.cta-wrap{gap:11px}.cta-wrap .cta-row{grid-template-columns:1fr;gap:9px}.cta-wrap .install-promo{padding:10px}.cta-wrap .install-cta{min-height:56px}}
 @media(prefers-reduced-motion:reduce){.cta-wrap .install-cta,.cta-wrap .secondary-btn{transition:none}}
+
+/* Confere Preço e conta */
+#pricePanel,#loginPanel{background:#fff;padding:18px;border-radius:16px;margin:12px 0}#pricePanel[hidden],#loginPanel[hidden],#logoutBtn[hidden]{display:none!important}.price-results{display:grid;gap:12px;margin:16px 0}.price-result{border:1px solid #d1d5db;border-radius:12px;padding:14px}.price-result-amount{font-size:24px;font-weight:900;margin:8px 0}#googleLogin,#skipLogin,#logoutBtn{padding:12px;border:1px solid #d1d5db;border-radius:12px;margin:8px 8px 8px 0;background:#ffca05;font-weight:700}#skipLogin{background:#fff}.bottom{grid-template-columns:repeat(4,minmax(0,1fr))}@media(max-width:420px){.bottom button{font-size:11px;padding:7px 1px}}
