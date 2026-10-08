@@ -44,3 +44,12 @@ main{max-width:1120px;margin:auto}
 
 /* Cabeçalho: um único nome e emblema sempre visível */
 .top .brand-lockup{display:flex;align-items:center;gap:12px;flex:1;min-width:0}.top .brand-logo{display:block;width:74px;height:74px;object-fit:contain;flex-shrink:0}.top .brand-lockup h1{margin:0 0 5px;font-size:20px;line-height:1.12}.top .brand-lockup p{margin:0}.top .status{flex-shrink:0}@media(max-width:440px){.top .brand-logo{width:60px;height:60px}.top .brand-lockup h1{font-size:16px}.top{gap:6px}}
+
+/* Chamada principal para instalação */
+.install-promo{display:flex;flex-direction:column;gap:6px;flex:1 1 100%;text-align:center;padding:10px;border:2px solid #151515;border-radius:16px;background:linear-gradient(145deg,#fff7c7,#fbbf24);box-shadow:0 5px 0 #171717,0 12px 22px rgba(0,0,0,.15)}
+.install-promo .install-cta{width:100%;min-height:60px;border:2px solid #111827;border-radius:12px;background:linear-gradient(180deg,#ffe366,#ffbd09);color:#111;font-size:clamp(19px,4.3vw,25px);font-weight:900;letter-spacing:.035em;box-shadow:0 4px 0 #111827;cursor:pointer;transition:transform .16s,box-shadow .16s}
+.install-promo .install-cta:active{transform:translateY(3px);box-shadow:0 1px 0 #111827}
+.install-promo .install-cta:focus-visible{outline:3px solid #0057b8;outline-offset:3px}
+.install-promo .install-caption{color:#171717;font-weight:750;font-size:12px;letter-spacing:.01em}
+.install-promo.hidden{display:none!important}
+@media(prefers-reduced-motion:reduce){.install-promo .install-cta{transition:none}}
