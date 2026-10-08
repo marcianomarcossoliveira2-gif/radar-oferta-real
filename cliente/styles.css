@@ -53,3 +53,19 @@ main{max-width:1120px;margin:auto}
 .install-promo .install-caption{color:#171717;font-weight:750;font-size:12px;letter-spacing:.01em}
 .install-promo.hidden{display:none!important}
 @media(prefers-reduced-motion:reduce){.install-promo .install-cta{transition:none}}
+
+/* Layout refinado dos botoes do PWA */
+.toolbar.cta-wrap{display:flex;flex-direction:column;align-items:stretch;gap:14px;margin:8px auto 22px;max-width:920px;width:100%}
+.cta-wrap .install-promo{flex:none;width:100%;padding:12px 14px 11px;border:1px solid #e6ba24;border-radius:18px;background:linear-gradient(145deg,#fff3b8,#ffda58);box-shadow:0 7px 20px rgba(21,31,46,.12);gap:9px}
+.cta-wrap .install-cta{width:100%;min-height:58px;display:flex;align-items:center;justify-content:center;border:1px solid #ce9a00;border-radius:13px;background:linear-gradient(180deg,#ffe675,#ffbe17);box-shadow:0 3px 8px rgba(105,68,0,.18);font-size:clamp(18px,3vw,23px);font-weight:900;color:#111827;transition:transform .15s,box-shadow .15s,filter .15s}
+.cta-wrap .install-cta:hover{transform:translateY(-1px);filter:brightness(1.035);box-shadow:0 6px 15px rgba(105,68,0,.2)}
+.cta-wrap .install-cta:active{transform:translateY(1px);box-shadow:0 1px 5px rgba(105,68,0,.15)}
+.cta-wrap .install-caption{font-size:13px;font-weight:750;line-height:1.4}
+.cta-wrap .cta-row{width:100%;display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.cta-wrap .secondary-btn{width:100%;min-height:49px;display:flex;justify-content:center;align-items:center;padding:11px 14px;border-radius:12px;font-size:14px;font-weight:800;cursor:pointer;transition:transform .15s,filter .15s;border:1px solid transparent;box-shadow:0 4px 10px rgba(17,24,39,.1)}
+.cta-wrap .secondary-btn:hover{transform:translateY(-1px);filter:brightness(1.035)}
+.cta-wrap .secondary-btn.refresh{background:#ffdb51;color:#151515;border-color:#edb900}
+.cta-wrap .secondary-btn.share{background:#111827;color:#fff;border-color:#111827}
+.cta-wrap .secondary-btn:focus-visible{outline:3px solid #2563eb;outline-offset:3px}
+@media(max-width:500px){.toolbar.cta-wrap{gap:11px}.cta-wrap .cta-row{grid-template-columns:1fr;gap:9px}.cta-wrap .install-promo{padding:10px}.cta-wrap .install-cta{min-height:56px}}
+@media(prefers-reduced-motion:reduce){.cta-wrap .install-cta,.cta-wrap .secondary-btn{transition:none}}
