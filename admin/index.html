@@ -17,9 +17,11 @@ header{display:flex;align-items:center;justify-content:space-between;gap:15px;fl
 <header><div><div class="muted">Mundo das Ferramentas • Administração</div><h1>Ajustes do Radar</h1></div><a href="../" style="color:#8be9e0">Área do Cliente ↗</a></header>
 <p class="muted">Controle o volume e a exigência das ofertas. As configurações são aplicadas nas próximas análises e não alteram ofertas já publicadas.</p>
 <section class="panel" id="login"><h2>Entrar no painel</h2>
-<p class="muted">Informe a chave administrativa do Radar. Ela não é armazenada neste navegador.</p>
-<label for="key">Chave do painel</label><input id="key" type="password" autocomplete="off" placeholder="Chave administrativa">
-<div class="actions"><button class="primary" id="enter">Acessar ajustes</button></div></section>
+<p class="muted">Use o e-mail cadastrado no Supabase e sua senha de acesso ao Radar.</p>
+<label for="email">E-mail</label><input id="email" type="email" autocomplete="username" value="marcianomarcossoliveira2@gmail.com" required>
+<label for="password">Senha</label><input id="password" type="password" autocomplete="current-password" placeholder="Sua senha de acesso" required>
+<div class="actions"><button class="primary" id="enter">Entrar</button><button id="forgot" type="button">Esqueci minha senha</button></div>
+<p id="loginNotice" role="status" aria-live="polite" class="detail"></p></section>
 <section id="settings" class="hidden">
 <div class="panel"><h2>Modos rápidos</h2><div class="presets">
 <button data-preset="volume">📦 Mais ofertas</button><button data-preset="balanced">⚖️ Equilibrado</button><button data-preset="strict">💎 Excepcionais</button></div>
@@ -32,26 +34,72 @@ header{display:flex;align-items:center;justify-content:space-between;gap:15px;fl
 <div class="actions"><button id="save" class="primary">Salvar ajustes</button><button id="reload">Recarregar valores</button><button id="logout">Sair</button></div>
 <p id="notice" role="status" aria-live="polite"></p><p class="detail">Continuam obrigatórios: avaliação e qualificação da oferta, verificações de preço e segurança do link de afiliado. Cupom somente quando confirmado e aplicável.</p></div>
 </section></main>
-<script>
-(()=>{'use strict';
-const endpoint='https://llgaeuvtrcpcvrcxkvpz.supabase.co/functions/v1/radar-site-dashboard';
+<script type="module">
+import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.57.0';
+const supabaseUrl='https://llgaeuvtrcpcvrcxkvpz.supabase.co';
+const publicKey='sb_publishable_wjLehqy8cAwaJZo-TScrqA_aWY6FTjO';
+const auth=createClient(supabaseUrl,publicKey,{auth:{persistSession:true,autoRefreshToken:true,detectSessionInUrl:true,storageKey:'radar-admin-auth'}});
+const endpoint=supabaseUrl+'/functions/v1/radar-site-dashboard';
 const $=id=>document.getElementById(id);
 const fields=['current','history','short'];
 const names=['min_current_discount_pct','min_history_discount_pct','min_short_history_discount_pct'];
 const max=[60,60,70];
 const presets={volume:[15,8,20],balanced:[20,10,25],strict:[30,20,35]};
-let key='',stamp='',busy=false;
+const adminEmail='marcianomarcossoliveira2@gmail.com';
+let stamp='',busy=false;
 function notice(message,error=false){$('notice').textContent=message;$('notice').className=error?'error':''}
+function loginNotice(message){$('loginNotice').textContent=message}
 function values(){return fields.map(id=>Number($(id).value))}
-function selectPreset(){const current=values();document.querySelectorAll('[data-preset]').forEach(b=>{b.classList.toggle('selected',JSON.stringify(presets[b.dataset.preset])===JSON.stringify(current))})}
+function selectPreset(){const current=values();document.querySelectorAll('[data-preset]').forEach(b=>b.classList.toggle('selected',JSON.stringify(presets[b.dataset.preset])===JSON.stringify(current)))}
 fields.forEach(id=>$(id).addEventListener('input',selectPreset));
-document.querySelectorAll('[data-preset]').forEach(b=>b.addEventListener('click',()=>{presets[b.dataset.preset].forEach((v,i)=>$(fields[i]).value=v);selectPreset();notice('Modo selecionado. Clique em Salvar ajustes para aplicar.')}))
-async function request(method='GET',body){const url=endpoint+'?action=offer-thresholds';const response=await fetch(url,{method,mode:'cors',cache:'no-store',headers:{'x-radar-dashboard-key':key,...(body?{'content-type':'application/json'}:{})},body:body?JSON.stringify(body):undefined});const data=await response.json().catch(()=>({}));if(!response.ok)throw Error(response.status===401?'Chave inválida ou sessão não autorizada':response.status===409?'Configuração alterada em outra sessão. Recarregue.':data.error||'Falha na comunicação com o servidor');return data}
+document.querySelectorAll('[data-preset]').forEach(b=>b.addEventListener('click',()=>{presets[b.dataset.preset].forEach((v,i)=>$(fields[i]).value=v);selectPreset();notice('Modo selecionado. Clique em Salvar ajustes para aplicar.')}));
+async function request(method='GET',body){
+ const {data:{session},error:sessionError}=await auth.auth.getSession();
+ if(sessionError||!session?.access_token)throw Error('Sua sessão expirou. Entre novamente.');
+ const response=await fetch(endpoint+'?action=offer-thresholds',{method,mode:'cors',cache:'no-store',headers:{'Authorization':'Bearer '+session.access_token,'apikey':publicKey,...(body?{'content-type':'application/json'}:{})},body:body?JSON.stringify(body):undefined});
+ const data=await response.json().catch(()=>({}));
+ if(!response.ok)throw Error(response.status===401?'Seu acesso não está autorizado para administrar o Radar.':response.status===409?'Os valores mudaram em outra sessão. Recarregue.':data.error||'Falha na comunicação com o servidor');
+ return data;
+}
 async function load(){const result=await request();const t=result.thresholds;if(!t)throw Error('Configuração não encontrada');names.forEach((n,i)=>$(fields[i]).value=Number(t[n]));stamp=t.updated_at;selectPreset();notice('Configuração carregada do servidor.')}
-$('enter').addEventListener('click',async()=>{key=$('key').value.trim();if(!key){alert('Informe a chave do painel.');return}try{await load();$('login').classList.add('hidden');$('settings').classList.remove('hidden');$('key').value=''}catch(e){key='';alert(e.message)}});
-$('key').addEventListener('keydown',e=>{if(e.key==='Enter')$('enter').click()});
+async function showAdmin(){await load();$('login').classList.add('hidden');$('settings').classList.remove('hidden');$('password').value='';loginNotice('')}
+async function enter(){
+ $('enter').disabled=true;loginNotice('Verificando acesso...');
+ try {
+   const email=$('email').value.trim().toLowerCase();
+   if(email!==adminEmail)throw Error('Este e-mail não está habilitado para administrar o Radar.');
+   const password=$('password').value;
+   if(!password)throw Error('Informe sua senha.');
+   const {error}=await auth.auth.signInWithPassword({email,password});
+   if(error)throw Error('E-mail ou senha incorretos. Se necessário, use Esqueci minha senha.');
+   await showAdmin();
+ }catch(e){loginNotice(e.message)}
+ finally{$('enter').disabled=false}
+}
+$('enter').addEventListener('click',enter);
+$('password').addEventListener('keydown',e=>{if(e.key==='Enter')enter()});
+$('forgot').addEventListener('click',async()=>{
+ const email=$('email').value.trim().toLowerCase();
+ if(email!==adminEmail){loginNotice('Confira o e-mail administrador.');return}
+ $('forgot').disabled=true;
+ try{
+  const {error}=await auth.auth.resetPasswordForEmail(email,{redirectTo:location.origin+location.pathname});
+  if(error)throw error;
+  loginNotice('Se o envio estiver habilitado, você receberá um e-mail para redefinir a senha.');
+ }catch(e){loginNotice('Não foi possível solicitar a redefinição. '+e.message)}
+ finally{$('forgot').disabled=false}
+});
 $('reload').addEventListener('click',async()=>{try{await load()}catch(e){notice(e.message,true)}});
-$('logout').addEventListener('click',()=>{key='';stamp='';$('settings').classList.add('hidden');$('login').classList.remove('hidden');notice('')});
-$('save').addEventListener('click',async()=>{if(busy)return;const v=values();if(v.some((n,i)=>!Number.isFinite(n)||n<0||n>max[i]||$(fields[i]).value.trim()==='')){notice('Confira os valores de cada campo.',true);return}busy=true;$('save').disabled=true;notice('Salvando...');try{const body={expected_updated_at:stamp};names.forEach((name,i)=>body[name]=v[i]);await request('POST',body);await load();notice('✓ Ajustes salvos e confirmados no servidor. Próximas avaliações usarão os novos limites.')}catch(e){notice(e.message,true)}finally{busy=false;$('save').disabled=false}});
-})();
+$('logout').addEventListener('click',async()=>{await auth.auth.signOut();stamp='';$('settings').classList.add('hidden');$('login').classList.remove('hidden');notice('');loginNotice('Sessão encerrada.')});
+$('save').addEventListener('click',async()=>{
+ if(busy)return;
+ const v=values();
+ if(v.some((n,i)=>!Number.isFinite(n)||n<0||n>max[i]||$(fields[i]).value.trim()==='')){notice('Confira os valores de cada campo.',true);return}
+ busy=true;$('save').disabled=true;notice('Salvando...');
+ try{const body={expected_updated_at:stamp};names.forEach((name,i)=>body[name]=v[i]);await request('POST',body);await load();notice('✓ Ajustes salvos e confirmados no servidor. Próximas avaliações usarão os novos limites.')}
+ catch(e){notice(e.message,true)}
+ finally{busy=false;$('save').disabled=false}
+});
+const {data:{session}}=await auth.auth.getSession();
+if(session?.user?.email?.toLowerCase()===adminEmail){try{await showAdmin()}catch(e){loginNotice(e.message)}}
 </script></body></html>
