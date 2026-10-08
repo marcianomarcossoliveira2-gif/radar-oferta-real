@@ -35,11 +35,39 @@ header{display:flex;align-items:center;justify-content:space-between;gap:15px;fl
 <div class="actions"><button id="save" class="primary">Salvar ajustes</button><button id="reload">Recarregar valores</button><button id="logout">Sair</button></div>
 <p id="notice" role="status" aria-live="polite"></p><p class="detail">Continuam obrigatórios: avaliação e qualificação da oferta, verificações de preço e segurança do link de afiliado. Cupom somente quando confirmado e aplicável.</p></div>
 </section></main>
-<script type="module">
-import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.57.0';
+<script>
 const supabaseUrl='https://llgaeuvtrcpcvrcxkvpz.supabase.co';
 const publicKey='sb_publishable_wjLehqy8cAwaJZo-TScrqA_aWY6FTjO';
-const auth=createClient(supabaseUrl,publicKey,{auth:{persistSession:true,autoRefreshToken:true,detectSessionInUrl:true,storageKey:'radar-admin-auth'}});
+const sessionKey='radar-admin-session-v2';
+let storedSession=null;
+try{storedSession=JSON.parse(sessionStorage.getItem(sessionKey)||'null')}catch{}
+const auth={auth:{
+ async signInWithPassword({email,password}){
+  try{const response=await fetch(supabaseUrl+'/auth/v1/token?grant_type=password',{method:'POST',headers:{'apikey':publicKey,'content-type':'application/json'},body:JSON.stringify({email,password})});const data=await response.json().catch(()=>({}));if(!response.ok) return {error:new Error(data.msg||data.error_description||data.message||data.error||'Falha no login')};storedSession=data;sessionStorage.setItem(sessionKey,JSON.stringify(data));return {data:{session:data},error:null}}catch(e){return {error:e}}
+ },
+ async getSession(){
+  if(!storedSession)return {data:{session:null},error:null};
+  if(storedSession.expires_at && Date.now()/1000>storedSession.expires_at-60){
+   if(!storedSession.refresh_token){storedSession=null;sessionStorage.removeItem(sessionKey);return {data:{session:null},error:null}}
+   try{const response=await fetch(supabaseUrl+'/auth/v1/token?grant_type=refresh_token',{method:'POST',headers:{'apikey':publicKey,'content-type':'application/json'},body:JSON.stringify({refresh_token:storedSession.refresh_token})});if(!response.ok)throw Error('Sua sessão expirou');const data=await response.json();storedSession=data;sessionStorage.setItem(sessionKey,JSON.stringify(data))}catch(e){storedSession=null;sessionStorage.removeItem(sessionKey);return {data:{session:null},error:e}}
+  }
+  return {data:{session:storedSession},error:null}
+ },
+ async resetPasswordForEmail(email,{redirectTo}={}){
+  try{const response=await fetch(supabaseUrl+'/auth/v1/recover?redirect_to='+encodeURIComponent(redirectTo||location.href),{method:'POST',headers:{'apikey':publicKey,'content-type':'application/json'},body:JSON.stringify({email})});const data=await response.json().catch(()=>({}));return {error:response.ok?null:new Error(data.msg||data.message||data.error_description||'Falha ao enviar recuperação')}}catch(e){return {error:e}}
+ },
+ async updateUser({password}){
+  try{const {data:{session}}=await this.getSession();if(!session?.access_token)throw Error('O link expirou. Solicite outro.');const response=await fetch(supabaseUrl+'/auth/v1/user',{method:'PUT',headers:{'apikey':publicKey,'Authorization':'Bearer '+session.access_token,'content-type':'application/json'},body:JSON.stringify({password})});const data=await response.json().catch(()=>({}));return {error:response.ok?null:new Error(data.msg||data.message||'Falha ao alterar senha')}}catch(e){return {error:e}}
+ },
+ async signOut(){storedSession=null;sessionStorage.removeItem(sessionKey);return {error:null}},
+ onAuthStateChange(callback){this.onRecover=callback;return {data:{subscription:{unsubscribe(){}}}}}
+}};
+const recoveryParams=new URLSearchParams(location.hash.replace(/^#/,''));
+if(recoveryParams.get('type')==='recovery'&&recoveryParams.get('access_token')){
+ storedSession={access_token:recoveryParams.get('access_token'),refresh_token:recoveryParams.get('refresh_token'),expires_at:Math.floor(Date.now()/1000)+Number(recoveryParams.get('expires_in')||3600),user:{email:'marcianomarcossoliveira2@gmail.com'}};
+ sessionStorage.setItem(sessionKey,JSON.stringify(storedSession));
+ history.replaceState(null,'',location.pathname+location.search);
+}
 const endpoint=supabaseUrl+'/functions/v1/radar-site-dashboard';
 const $=id=>document.getElementById(id);
 const fields=['current','history','short'];
@@ -111,7 +139,7 @@ auth.auth.onAuthStateChange(async(event)=>{
  if(event==='PASSWORD_RECOVERY'){$('settings').classList.add('hidden');$('login').classList.remove('hidden');$('recovery').classList.remove('hidden');loginNotice('Escolha sua nova senha.')}
 });
 const urlParams=new URLSearchParams(location.hash.replace(/^#/,''));
-const recoveryLink=urlParams.get('type')==='recovery';
+const recoveryLink=recoveryParams.get('type')==='recovery';
 const {data:{session}}=await auth.auth.getSession();
 if(!recoveryLink&&session?.user?.email?.toLowerCase()===adminEmail){try{await showAdmin()}catch(e){loginNotice(e.message)}}
 if(recoveryLink){$('recovery').classList.remove('hidden');loginNotice('Escolha sua nova senha abaixo.')}
