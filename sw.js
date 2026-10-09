@@ -1,5 +1,5 @@
-const CACHE="radar-cliente-v20";
-const ASSETS=["./","index.html","styles.css?v=20","app.js?v=19","push.js?v=12","manifest.webmanifest","icons/icon.svg","icons/icon-192.png","icons/icon-512.png","icons/maskable-512.png","icons/apple-touch-icon.png","images/MLB30144703-a21c1ed1c4.webp","images/MLB19802405-a4f1802ab5.webp","images/MLB50181290-fe4475bb76.webp","images/MLB39962085-7563b69464.webp","images/MLB25371983-9956128aa0.webp","images/MLB47944518-2aa277f269.webp"];
+const CACHE="radar-cliente-v23";
+const ASSETS=["./","index.html","styles.css?v=20","app.js?v=20","push.js?v=12","manifest.webmanifest","icons/icon.svg","icons/icon-192.png","icons/icon-512.png","icons/maskable-512.png","icons/apple-touch-icon.png","images/MLB30144703-a21c1ed1c4.webp","images/MLB19802405-a4f1802ab5.webp","images/MLB50181290-fe4475bb76.webp","images/MLB39962085-7563b69464.webp","images/MLB25371983-9956128aa0.webp","images/MLB47944518-2aa277f269.webp"];
 self.addEventListener("install",e=>e.waitUntil(caches.open(CACHE).then(c=>c.addAll(ASSETS)).then(()=>self.skipWaiting())));
 self.addEventListener("activate",e=>e.waitUntil(caches.keys().then(keys=>Promise.all(keys.filter(k=>k.startsWith("radar-cliente-")&&k!==CACHE).map(k=>caches.delete(k)))).then(()=>self.clients.claim())));
 self.addEventListener("fetch",e=>{
