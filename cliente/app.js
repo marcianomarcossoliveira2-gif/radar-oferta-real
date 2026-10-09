@@ -8,6 +8,7 @@ function trackOfferUrl(url){const offer=offers.find(o=>linkOf(o)===url);if(offer
 
 const $=s=>document.querySelector(s);
 const cards=$("#cards"),q=$("#q"),category=$("#category"),days=$("#days"),discount=$("#discount"),maxPrice=$("#maxPrice"),coupon=$("#coupon"),official=$("#official"),count=$("#count"),statusEl=$("#status"),sortOrder=$("#sortOrder");
+days.value="7";
 let offers=[],timer=null,requestId=0,loadState="loading",activeController;
 const money=v=>v==null||!Number.isFinite(Number(v))?"—":Number(v).toLocaleString("pt-BR",{style:"currency",currency:"BRL"});
 const esc=s=>String(s??"").replace(/[&<>"\']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","\'":"&#39;"}[c]));
@@ -81,7 +82,7 @@ async function load(){
   loadState="loading";offers=[];render();statusEl.className="status";statusEl.textContent="● Atualizando";
   const p=new URLSearchParams();
   if(q.value.trim())p.set("q",q.value.trim());
-  p.set("days",days.value||"1");
+  p.set("days",days.value||"7");
   p.set("min_discount",discount.value||"0");
   if(maxPrice.value)p.set("max_price",maxPrice.value);
   if(coupon.checked)p.set("coupon","true");
@@ -121,7 +122,7 @@ document.querySelectorAll("[data-view]").forEach(button=>button.onclick=()=>{
   for(const name of ["offers","favorites","alerts"])$("#"+name+"Panel").classList.toggle("hidden",name!==view);
   document.querySelectorAll("[data-view]").forEach(b=>{b.classList.toggle("active",b===button);if(b===button)b.setAttribute("aria-current","page");else b.removeAttribute("aria-current")});
   if(view==="favorites"){
-    q.value="";category.value="";days.value="1";discount.value="0";maxPrice.value="";coupon.checked=false;official.checked=false;load();
+    q.value="";category.value="";days.value="7";discount.value="0";maxPrice.value="";coupon.checked=false;official.checked=false;load();
   }else render();
 });
 document.addEventListener("click",event=>{
